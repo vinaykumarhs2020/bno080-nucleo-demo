@@ -303,12 +303,28 @@ static void startReports(void)
     // config.reportInterval_us = 1000;   // microseconds (1000Hz)
     config.batchInterval_us = 0;
 
-    sensorId = SH2_ROTATION_VECTOR;
+    sensorId = SH2_LINEAR_ACCELERATION;
     // sensorId = SH2_GYRO_INTEGRATED_RV;
     status = sh2_setSensorConfig(sensorId, &config);
     if (status != 0) {
         printf("Error while enabling sensor %d\n", sensorId);
     }
+    // Add second reporting
+    sensorId = SH2_GEOMAGNETIC_ROTATION_VECTOR;
+    // sensorId = SH2_GYRO_INTEGRATED_RV;
+    status = sh2_setSensorConfig(sensorId, &config);
+    if (status != 0) {
+        printf("Error while enabling sensor %d\n", sensorId);
+    }
+    
+    // Add second reporting
+    sensorId = SH2_GYROSCOPE_CALIBRATED;
+    // sensorId = SH2_GYRO_INTEGRATED_RV;
+    status = sh2_setSensorConfig(sensorId, &config);
+    if (status != 0) {
+        printf("Error while enabling sensor %d\n", sensorId);
+    }
+    
 }
 
 static void printDsfHeaders(void)
@@ -398,7 +414,7 @@ static void printDsf(const sh2_SensorEvent_t * event)
                    value.un.accelerometer.y,
                    value.un.accelerometer.z);
             break;
-        
+               
         case SH2_ROTATION_VECTOR:
             r = value.un.rotationVector.real;
             i = value.un.rotationVector.i;
@@ -438,7 +454,7 @@ static void printEvent(const sh2_SensorEvent_t * event)
     int rc;
     sh2_SensorValue_t value;
     float scaleRadToDeg = 180.0 / 3.14159265358;
-    float r, i, j, k, acc_deg, x, y, z;
+    float r, i, j, k, acc_deg, x, y, z, acc_rad;
     float t;
 
     rc = sh2_decodeSensorEvent(&value, event);
@@ -488,6 +504,31 @@ static void printEvent(const sh2_SensorEvent_t * event)
                    r, i, j, k,
                    x, y, z);
             break;
+// Modifications:
+    case SH2_GEOMAGNETIC_ROTATION_VECTOR:
+            r = value.un.geoMagRotationVector.real;
+            i = value.un.geoMagRotationVector.i;
+            j = value.un.geoMagRotationVector.j;
+            k = value.un.geoMagRotationVector.k;
+            acc_rad = value.un.geoMagRotationVector.accuracy;
+            printf("Rotation Vector: "
+                   "r:%5.3f i:%5.3f j:%5.3f k:%5.3f (acc: %5.3f deg)\n",
+                   r, i, j, k, acc_rad);
+      break;
+    case SH2_GYROSCOPE_CALIBRATED:
+          i=value.un.gyroscope.x;
+          j=value.un.gyroscope.y;
+          k=value.un.gyroscope.z;
+          printf("Gyroscope: x:%5.3f y:%5.3f z:%5.3f\n", 
+                 i,j,k);
+      break;
+    case SH2_LINEAR_ACCELERATION:
+      printf("Accelration: x:%5.3f y:%5.3f z:%5.3f\n",
+               value.un.linearAcceleration.x,
+               value.un.linearAcceleration.y,
+               value.un.linearAcceleration.z);
+        break;
+  
         default:
             printf("Unknown sensor: %d\n", value.sensorId);
             break;
